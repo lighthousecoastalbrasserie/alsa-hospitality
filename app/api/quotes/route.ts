@@ -1,9 +1,10 @@
+import {isSameOrigin} from '@/lib/request-origin';
 import {NextResponse} from 'next/server';
 import {z} from 'zod';
 import {getPool} from '@/lib/db';
 import {calculateQuote} from '@/lib/pricing';
 const Schema=z.object({tier:z.enum(['well','standard','premium']),guests:z.number().int().min(20).max(10000),glassware:z.boolean(),extraSparkling:z.boolean(),name:z.string().trim().min(2).max(160),email:z.email().max(320),date:z.iso.date()});
-export async function POST(req:Request){
+export async function POST(req:Request){if(!isSameOrigin(req))return NextResponse.json({error:'Invalid request origin'},{status:403});
  let body:unknown;try{body=await req.json()}catch{return NextResponse.json({error:'Invalid JSON'},{status:400})}
  const parsed=Schema.safeParse(body);if(!parsed.success)return NextResponse.json({error:'Invalid request details'},{status:400});
  const d=parsed.data;const calc=calculateQuote(d);const client=await getPool().connect();
